@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Better latte than never — Order Kiosk</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f0a05;--surface:#1c1108;--card:#251710;--card2:#2e1e12;--card3:#38261a;
+  --gold:#c8903e;--gold2:#e8b56a;--gold3:#f5d090;
+  --cream:#f0e0c5;--cream2:#c8a878;--cream3:#a07848;
+  --text:#eedcbe;--muted:#7a5c3a;--muted2:#9a7a52;
+  --accent:#d4622a;--green:#3a7a48;--red:#b03020;
+  --border:rgba(200,144,62,0.18);--border2:rgba(200,144,62,0.35);
+  --radius:16px;--radius2:24px;
+  --shadow:0 8px 32px rgba(0,0,0,0.5);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:0.6}
+.header{background:linear-gradient(135deg,var(--surface) 0%,#1a0e06 100%);padding:14px 20px 12px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:50}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.logo-wrap{display:flex;align-items:center;gap:12px}
+.logo-mark{width:38px;height:38px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 2px 12px rgba(200,144,62,0.3)}
+.logo{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold2);line-height:1.1}
+.logo span{color:var(--cream2);font-size:11px;display:block;font-family:'DM Sans',sans-serif;font-weight:400;letter-spacing:3px;text-transform:uppercase;margin-top:1px}
+.cart-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0f0a05;border:none;border-radius:50px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all 0.2s;box-shadow:0 2px 12px rgba(200,144,62,0.25)}
+.cart-btn:active{transform:scale(0.95)}
+.cart-count{background:#0f0a05;color:var(--gold2);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.welcome{padding:14px 20px 6px;flex-shrink:0}
+.welcome h2{font-family:'Playfair Display',serif;font-size:22px;color:var(--cream);margin-bottom:2px}
+.welcome p{color:var(--muted2);font-size:12px;font-weight:300;letter-spacing:0.3px}
+.tabs-wrap{padding:10px 20px 0;flex-shrink:0;overflow:hidden}
+.tabs{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:7px 15px;border-radius:50px;border:1px solid var(--border);background:transparent;color:var(--muted2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.tab.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0f0a05;border-color:transparent;font-weight:700;box-shadow:0 2px 10px rgba(200,144,62,0.3)}
+.tab:active{transform:scale(0.96)}
+.menu-area{flex:1;overflow-y:auto;padding:12px 20px 20px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.menu-area::-webkit-scrollbar{width:4px}
+.menu-area::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.section-title{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin:8px 0 10px;font-weight:600}
+.menu-grid{display:flex;flex-direction:column;gap:9px}
+.item-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.item-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,144,62,0.04),transparent);pointer-events:none}
+.item-card:active{transform:scale(0.985);background:var(--card2)}
+.item-card.has-item{border-color:var(--border2)}
+.item-emoji{font-size:26px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:12px;flex-shrink:0}
+.item-info{flex:1;min-width:0}
+.item-name{font-weight:600;font-size:14px;color:var(--cream);margin-bottom:3px;line-height:1.2}
+.item-desc{font-size:11px;color:var(--muted2);font-weight:300;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.4}
+.item-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0}
+.item-price{font-weight:700;color:var(--gold2);font-size:14px}
+.add-btn-inline{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0f0a05;border:none;border-radius:20px;padding:5px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:199;opacity:0;pointer-events:none;transition:opacity 0.3s;backdrop-filter:blur(2px)}
+.overlay.show{opacity:1;pointer-events:all}
+.cart-panel{position:fixed;bottom:0;left:50%;width:100%;max-width:520px;background:linear-gradient(180deg,var(--surface) 0%,#130d06 100%);border-top:1px solid var(--border2);border-radius:24px 24px 0 0;padding:0 0 32px;z-index:200;transform:translateX(-50%) translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);max-height:85vh;display:flex;flex-direction:column}
+.cart-panel.open{transform:translateX(-50%) translateY(0)}
+.cart-handle-bar{padding:14px 0 4px;display:flex;justify-content:center;cursor:pointer;flex-shrink:0}
+.cart-handle{width:36px;height:4px;background:var(--border2);border-radius:2px}
+.cart-head{padding:0 20px 14px;flex-shrink:0;border-bottom:1px solid var(--border)}
+.cart-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--cream)}
+.cart-body{flex:1;overflow-y:auto;padding:14px 20px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.cart-body::-webkit-scrollbar{width:3px}
+.cart-body::-webkit-scrollbar-thumb{background:var(--border2)}
+.cart-items{display:flex;flex-direction:column;gap:9px}
+.cart-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 14px}
+.cart-item-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.cart-item-name{font-size:14px;font-weight:600;color:var(--cream);line-height:1.2}
+.cart-item-mods{font-size:11px;color:var(--muted2);margin-top:3px;font-weight:300;line-height:1.5}
+.cart-item-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.cart-item-price{font-size:14px;font-weight:700;color:var(--gold2)}
+.remove-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 4px;line-height:1;transition:color 0.2s}
+.remove-btn:hover{color:var(--red)}
+.cart-foot{padding:14px 20px 0;flex-shrink:0;border-top:1px solid var(--border)}
+.cart-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.cart-label{font-size:13px;color:var(--muted2)}
+.cart-total-price{font-size:22px;font-weight:700;color:var(--gold2);font-family:'Playfair Display',serif}
+.order-btn{width:100%;margin-top:14px;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0f0a05;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;box-shadow:0 4px 16px rgba(200,144,62,0.3)}
+.order-btn:active{transform:scale(0.98)}
+.order-btn:disabled{background:var(--muted);cursor:not-allowed;box-shadow:none}
+.empty-cart{text-align:center;padding:32px 0;color:var(--muted2);font-size:14px}
+.empty-cart div{font-size:36px;margin-bottom:12px;filter:grayscale(0.3)}
+.float-cart{position:fixed;bottom:20px;right:16px;z-index:150;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0f0a05;border:none;border-radius:50px;padding:12px 18px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(200,144,62,0.45);transition:all 0.3s;opacity:0;pointer-events:none;transform:translateY(8px)}
+.float-cart.visible{opacity:1;pointer-events:all;transform:translateY(0)}
+.float-cart:active{transform:scale(0.96)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;opacity:0;pointer-events:none;transition:opacity 0.3s;backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{background:linear-gradient(180deg,var(--surface) 0%,#130d06 100%);border-radius:24px 24px 0 0;border:1px solid var(--border2);border-bottom:none;width:100%;max-width:520px;padding:0 0 32px;transform:translateY(30px);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);max-height:88vh;overflow-y:auto}
+.modal-overlay.show .modal{transform:translateY(0)}
+.modal-handle-bar{padding:14px 0 6px;display:flex;justify-content:center}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px}
+.modal-inner{padding:0 20px 20px}
+.modal-item-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.modal-emoji{font-size:32px;width:56px;height:56px;background:var(--card2);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-item-name{font-family:'Playfair Display',serif;font-size:18px;color:var(--cream)}
+.modal-item-price{font-size:14px;color:var(--gold2);font-weight:600;margin-top:2px}
+.modal-section{margin-bottom:18px}
+.modal-section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:10px}
+.sugar-display{text-align:center;margin-bottom:10px}
+.sugar-percent{font-size:28px;font-weight:700;color:var(--gold2);font-family:'Playfair Display',serif}
+.sugar-label-text{font-size:11px;color:var(--muted2);margin-top:2px}
+.sugar-slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;outline:none;cursor:pointer;background:linear-gradient(to right,var(--gold) var(--pct,25%),var(--card2) var(--pct,25%))}
+.sugar-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));cursor:pointer;box-shadow:0 2px 8px rgba(200,144,62,0.5)}
+.sugar-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));cursor:pointer;border:none;box-shadow:0 2px 8px rgba(200,144,62,0.5)}
+.sugar-ticks{display:flex;justify-content:space-between;margin-top:8px}
+.sugar-tick{font-size:10px;color:var(--muted);font-weight:500}
+.addon-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.addon-chip{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.addon-chip.selected{border-color:var(--gold);background:rgba(200,144,62,0.12)}
+.addon-chip:active{transform:scale(0.97)}
+.addon-chip-name{font-size:13px;font-weight:500;color:var(--cream)}
+.addon-chip-price{font-size:12px;font-weight:600;color:var(--gold2)}
+.addon-check{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;font-size:10px}
+.addon-chip.selected .addon-check{background:var(--gold);border-color:var(--gold);color:#0f0a05}
+.size-row{display:flex;gap:8px}
+.size-chip{flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px 8px;cursor:pointer;transition:all 0.2s;text-align:center}
+.size-chip.selected{border-color:var(--gold);background:rgba(200,144,62,0.12)}
+.size-chip-name{font-size:13px;font-weight:600;color:var(--cream)}
+.size-chip-price{font-size:11px;color:var(--muted2);margin-top:2px}
+.modal-qty-row{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px}
+.modal-qty-ctrl{display:flex;align-items:center;gap:14px}
+.modal-qty-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border2);background:var(--card2);color:var(--cream);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.modal-qty-btn.plus{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0f0a05;border-color:transparent}
+.modal-qty-btn:active{transform:scale(0.88)}
+.modal-qty-num{font-size:20px;font-weight:700;min-width:24px;text-align:center;color:var(--cream)}
+.modal-add-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0f0a05;border:none;border-radius:var(--radius);padding:14px 24px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.modal-add-btn:active{transform:scale(0.97)}
+.notes-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;resize:none;outline:none;transition:border-color 0.2s}
+.notes-input:focus{border-color:var(--gold)}
+.notes-input::placeholder{color:var(--muted)}
+.success-screen{position:fixed;inset:0;background:var(--bg);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;opacity:0;pointer-events:none;transition:opacity 0.4s}
+.success-screen.show{opacity:1;pointer-events:all}
+.success-icon{font-size:56px;margin-bottom:20px;animation:bounce 0.6s ease}
+@keyframes bounce{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.success-title{font-family:'Playfair Display',serif;font-size:28px;color:var(--cream);margin-bottom:8px}
+.success-sub{color:var(--muted2);font-size:13px;line-height:1.7}
+.order-num-box{background:var(--card);border:2px solid var(--border2);border-radius:20px;padding:16px 32px;margin:20px 0}
+.order-num{font-size:52px;font-weight:700;color:var(--gold2);font-family:'Playfair Display',serif;line-height:1}
+.order-num-label{font-size:11px;color:var(--muted2);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.success-instructions{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:24px;text-align:left}
+.success-step{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.success-step:last-child{margin-bottom:0}
+.step-num{width:24px;height:24px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#0f0a05;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;color:var(--cream2);line-height:1.5}
+.new-order-btn{padding:14px 36px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0f0a05;border:none;border-radius:50px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(200,144,62,0.3)}
+.new-order-btn:active{transform:scale(0.97)}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo-wrap">
+    <div class="logo-mark">☕</div>
+    <div class="logo">Better latte than never<span>Self-Order Kiosk</span></div>
+  </div>
+  <button class="cart-btn" onclick="toggleCart()">
+    🛒 Cart <span class="cart-count" id="cartCount">0</span>
+  </button>
+</div>
+
+<div class="welcome">
+  <h2>What would you like today?</h2>
+  <p>Tap an item to customize your order</p>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs" id="tabsEl"></div>
+</div>
+<div class="menu-area">
+  <div class="section-title" id="sectionTitle"></div>
+  <div class="menu-grid" id="menuEl"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="toggleCart()"></div>
+
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-handle-bar" onclick="toggleCart()"><div class="cart-handle"></div></div>
+  <div class="cart-head"><div class="cart-title">Your Order</div></div>
+  <div class="cart-body">
+    <div class="cart-items" id="cartItems"></div>
+  </div>
+  <div class="cart-foot">
+    <div class="cart-row">
+      <span class="cart-label">Subtotal</span>
+      <span style="font-size:14px;font-weight:600;color:var(--cream2)" id="cartSubtotal">₱0.00</span>
+    </div>
+    <div class="cart-row">
+      <span class="cart-label">Total</span>
+      <span class="cart-total-price" id="cartTotal">₱0.00</span>
+    </div>
+    <button class="order-btn" id="orderBtn" onclick="placeOrder()" disabled>Place Order</button>
+  </div>
+</div>
+
+<button class="float-cart" id="floatCart" onclick="toggleCart()">
+  🛒 <span id="floatLabel">0 items</span> &bull; <span id="floatPrice">₱0</span>
+</button>
+
+<!-- CUSTOMISE MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalIf(event)">
+  <div class="modal" id="modal">
+    <div class="modal-handle-bar"><div class="modal-handle"></div></div>
+    <div class="modal-inner">
+      <div class="modal-item-head">
+        <div class="modal-emoji" id="modalEmoji">☕</div>
+        <div>
+          <div class="modal-item-name" id="modalName">Item</div>
+          <div class="modal-item-price" id="modalBasePrice">₱0</div>
+        </div>
+      </div>
+      <div class="modal-section" id="sizeSection">
+        <div class="modal-section-title">Size</div>
+        <div class="size-row" id="sizeRow"></div>
+      </div>
+      <div class="modal-section" id="sugarSection">
+        <div class="modal-section-title">Sugar Level</div>
+        <div class="sugar-display">
+          <div class="sugar-percent" id="sugarPctDisplay">25%</div>
+          <div class="sugar-label-text" id="sugarLabelText">Less Sweet</div>
+        </div>
+        <input type="range" class="sugar-slider" id="sugarSlider" min="0" max="100" step="25" value="25" oninput="updateSugar(this.value)" style="--pct:25%">
+        <div class="sugar-ticks">
+          <span class="sugar-tick">0%</span><span class="sugar-tick">25%</span>
+          <span class="sugar-tick">50%</span><span class="sugar-tick">75%</span>
+          <span class="sugar-tick">100%</span>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title" id="addonSectionTitle">Add-ons <span style="color:var(--muted2);font-size:10px;text-transform:none;letter-spacing:0">(optional)</span></div>
+        <div class="addon-grid" id="addonGrid"></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Special Instructions</div>
+        <textarea class="notes-input" id="modalNotes" rows="2" placeholder="e.g. extra hot, no foam, oat milk…"></textarea>
+      </div>
+      <div class="modal-qty-row">
+        <div class="modal-qty-ctrl">
+          <button class="modal-qty-btn" onclick="modalQtyChange(-1)">−</button>
+          <span class="modal-qty-num" id="modalQty">1</span>
+          <button class="modal-qty-btn plus" onclick="modalQtyChange(1)">+</button>
+        </div>
+        <button class="modal-add-btn" id="modalAddBtn" onclick="addFromModal()">Add to Order — <span id="modalAddPrice">₱0</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS SCREEN -->
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">☕</div>
+  <div class="success-title">Order Placed!</div>
+  <div class="success-sub">Show this number at the counter to pay.</div>
+  <div class="order-num-box">
+    <div class="order-num" id="orderNumEl">#--</div>
+    <div class="order-num-label">Order Number</div>
+  </div>
+  <div class="success-instructions">
+    <div class="success-step"><div class="step-num">1</div><div class="step-text">Proceed to the cashier counter.</div></div>
+    <div class="success-step"><div class="step-num">2</div><div class="step-text">Show your order number to the staff.</div></div>
+    <div class="success-step"><div class="step-num">3</div><div class="step-text">Pay via <strong>GCash</strong> or cash. Scan the QR at the counter.</div></div>
+    <div class="success-step"><div class="step-num">4</div><div class="step-text">Wait for your name/number to be called!</div></div>
+  </div>
+  <button class="new-order-btn" onclick="newOrder()">Start New Order</button>
+</div>
+
+<script>
+// ── CONNECTS TO server.js + MySQL (same as dashboard) ────────────────────────
+const API = 'http://localhost:3000/api';
+
+const IS_DRINK_CAT = cat => !["Pastries","Snacks"].includes(cat);
+
+const MENU = [
+  {cat:"Hot Coffee", items:[
+    {name:"Espresso",             desc:"Double shot, bold & intense",                  price:85,  emoji:"☕"},
+    {name:"Americano",            desc:"Espresso + hot water, clean finish",            price:95,  emoji:"🥃"},
+    {name:"Flat White",           desc:"Velvety micro-foam, strong ratio",              price:110, emoji:"☕"},
+    {name:"Cappuccino",           desc:"Equal parts espresso, milk & foam",             price:110, emoji:"☕"},
+    {name:"Café Latte",           desc:"Smooth espresso & steamed milk",                price:120, emoji:"🍵"},
+    {name:"Caramel Macchiato",    desc:"Vanilla, milk, espresso & caramel drizzle",     price:135, emoji:"☕"},
+    {name:"Mocha",                desc:"Espresso, dark chocolate & steamed milk",       price:130, emoji:"🍫"},
+    {name:"Cortado",              desc:"Equal espresso & warm milk, no foam",           price:100, emoji:"☕"},
+    {name:"Lungo",                desc:"Extended pour, mellow & aromatic",              price:90,  emoji:"☕"},
+    {name:"Affogato",             desc:"Espresso shot poured over vanilla ice cream",   price:140, emoji:"🍨"},
+    {name:"Vienna Coffee",        desc:"Double espresso topped with whipped cream",     price:130, emoji:"☕"},
+    {name:"Piccolo Latte",        desc:"Ristretto & steamed milk in small glass",       price:105, emoji:"🥛"},
+    {name:"Café Breve",           desc:"Espresso with steamed half-and-half",           price:130, emoji:"☕"},
+    {name:"Bone Dry Cappuccino",  desc:"All foam, no milk — espresso base",             price:115, emoji:"☕"},
+    {name:"Ristretto",            desc:"Ultra-short pull, intense & sweet",             price:90,  emoji:"☕"},
+    {name:"Hazelnut Latte",       desc:"Espresso, hazelnut syrup & steamed milk",       price:135, emoji:"🌰"},
+    {name:"Pumpkin Spice Latte",  desc:"Seasonal blend with espresso & spice",          price:145, emoji:"🎃"},
+    {name:"Honey Cinnamon Latte", desc:"Espresso, honey, cinnamon & steamed milk",     price:140, emoji:"🍯"},
+    {name:"Salted Caramel Latte", desc:"Sweet & salty espresso with caramel",          price:140, emoji:"🧂"},
+    {name:"White Chocolate Mocha",desc:"Espresso, white choc & silky foam",            price:145, emoji:"🤍"},
+  ]},
+  {cat:"Cold Drinks", items:[
+    {name:"Iced Americano",       desc:"Bold espresso over ice",                        price:100, emoji:"🧊"},
+    {name:"Cold Brew",            desc:"12-hour steeped, smooth & strong",              price:130, emoji:"🫙"},
+    {name:"Iced Latte",           desc:"Espresso, milk & ice",                          price:125, emoji:"🧋"},
+    {name:"Strawberry Matcha",    desc:"Matcha layered with fresh strawberry",          price:150, emoji:"🍓"},
+    {name:"Spanish Latte",        desc:"Espresso, condensed milk & ice",                price:145, emoji:"🥛"},
+    {name:"Brown Sugar Oat",      desc:"Espresso, oat milk & brown sugar syrup",        price:155, emoji:"🤎"},
+    {name:"Iced Mocha",           desc:"Espresso, chocolate sauce & cold milk",         price:135, emoji:"🍫"},
+    {name:"Iced Caramel Latte",   desc:"Espresso, milk, caramel over ice",              price:135, emoji:"🍮"},
+    {name:"Dalgona Coffee",       desc:"Whipped coffee over iced milk",                 price:140, emoji:"☁️"},
+    {name:"Vietnamese Iced",      desc:"Strong drip coffee & condensed milk",           price:130, emoji:"🇻🇳"},
+    {name:"Iced Hazelnut Latte",  desc:"Hazelnut syrup, espresso & cold milk",          price:140, emoji:"🌰"},
+    {name:"Salted Cream Cold",    desc:"Cold brew topped with salted cream",            price:160, emoji:"🧊"},
+    {name:"Coconut Cold Brew",    desc:"Cold brew with fresh coconut water & cream",    price:160, emoji:"🥥"},
+    {name:"Iced Lavender Latte",  desc:"Lavender syrup, espresso & milk on ice",       price:155, emoji:"💜"},
+    {name:"Iced Toffee Nut",      desc:"Toffee nut syrup, espresso & cold milk",        price:145, emoji:"🥜"},
+    {name:"Nitro Cold Brew",      desc:"Nitrogen-infused, creamy & smooth",             price:170, emoji:"🫧"},
+    {name:"Iced Dirty Matcha",    desc:"Espresso shot over iced matcha latte",          price:165, emoji:"💚"},
+    {name:"Peach Iced Tea",       desc:"Brewed black tea with peach puree & ice",       price:115, emoji:"🍑"},
+    {name:"Lychee Yakult",        desc:"Lychee syrup, Yakult & sparkling water",        price:120, emoji:"🍡"},
+    {name:"Passion Fruit Soda",   desc:"Passion fruit purée & sparkling water",         price:115, emoji:"🟡"},
+  ]},
+  {cat:"Non-Coffee", items:[
+    {name:"Matcha Latte",         desc:"Ceremonial grade, oat or whole milk",           price:130, emoji:"🍵"},
+    {name:"Chocolate Frappe",     desc:"Rich dark cocoa blend blended",                 price:140, emoji:"🍫"},
+    {name:"Mango Smoothie",       desc:"Fresh mango, yogurt & honey",                   price:135, emoji:"🥭"},
+    {name:"Chamomile Tea",        desc:"Floral & calming herbal brew",                  price:85,  emoji:"🌼"},
+    {name:"Strawberry Lemonade",  desc:"Fresh strawberries & hand-squeezed lemon",     price:120, emoji:"🍋"},
+    {name:"Taro Milk Tea",        desc:"Creamy taro with pearls of your choice",        price:145, emoji:"🟣"},
+    {name:"Hojicha Latte",        desc:"Roasted green tea, nutty & caramel notes",      price:135, emoji:"🍂"},
+    {name:"Blue Pea Lemonade",    desc:"Butterfly pea flower tea & lemon",             price:130, emoji:"💙"},
+    {name:"Ube Milk Tea",         desc:"Purple yam, milk tea & tapioca pearls",         price:150, emoji:"🫐"},
+    {name:"Ginger Honey Tea",     desc:"Warm ginger root steeped with raw honey",      price:95,  emoji:"🫖"},
+    {name:"Buko Pandan",          desc:"Pandan leaves, coconut & cream",                price:125, emoji:"🥤"},
+    {name:"Avocado Shake",        desc:"Blended avocado with condensed milk & cream",  price:145, emoji:"🥑"},
+  ]},
+  {cat:"Pastries", items:[
+    {name:"Butter Croissant",        desc:"Flaky, golden, baked fresh daily",           price:75,  emoji:"🥐"},
+    {name:"Chocolate Muffin",        desc:"Dark chocolate chips, moist center",         price:85,  emoji:"🧁"},
+    {name:"Banana Bread",            desc:"Moist, nutty & house-baked",                 price:80,  emoji:"🍌"},
+    {name:"Cinnamon Roll",           desc:"Warm spiral with cream cheese icing",        price:110, emoji:"🌀"},
+    {name:"Egg Sandwich",            desc:"Scrambled egg, cheese & brioche",            price:120, emoji:"🥪"},
+    {name:"Almond Danish",           desc:"Flaky pastry with almond cream filling",     price:95,  emoji:"🥐"},
+    {name:"Blueberry Scone",         desc:"Buttery scone with fresh blueberries",       price:90,  emoji:"🫐"},
+    {name:"Ensaymada",               desc:"Soft Filipino brioche with cheese & butter", price:75,  emoji:"🍞"},
+    {name:"Pandesal",                desc:"Classic Filipino morning bread roll",        price:35,  emoji:"🍞"},
+    {name:"Spanish Bread",           desc:"Sweet breadstick with butter-sugar filling", price:40,  emoji:"🥖"},
+    {name:"Cheese Roll",             desc:"Buttery roll stuffed with melted cheese",    price:65,  emoji:"🧀"},
+    {name:"Ube Cheese Pandesal",     desc:"Purple yam roll with cheese center",         price:60,  emoji:"🟣"},
+    {name:"Ham & Cheese Croissant",  desc:"Flaky croissant with ham & Swiss cheese",   price:145, emoji:"🥐"},
+    {name:"Choco Marble Loaf",       desc:"Swirled vanilla-chocolate loaf cake",        price:95,  emoji:"🍫"},
+    {name:"Lemon Pound Cake",        desc:"Dense, moist citrus cake with glaze",        price:90,  emoji:"🍋"},
+  ]},
+];
+
+const ADDONS = [
+  {name:"Extra Espresso Shot", price:30},{name:"Oat Milk",         price:30},
+  {name:"Almond Milk",         price:30},{name:"Coconut Milk",      price:30},
+  {name:"Whipped Cream",       price:20},{name:"Tapioca Pearls",    price:20},
+  {name:"Nata de Coco",        price:20},{name:"Chia Seeds",        price:20},
+  {name:"Vanilla Syrup",       price:15},{name:"Caramel Syrup",     price:15},
+  {name:"Hazelnut Syrup",      price:15},{name:"Lavender Syrup",    price:15},
+  {name:"Brown Sugar Syrup",   price:15},{name:"Mocha Drizzle",     price:15},
+  {name:"Extra Ice",           price:0}, {name:"Less Ice",          price:0},
+];
+
+const PASTRY_ADDONS = [
+  {name:"Chocolate Syrup",  price:15},{name:"Hazelnut Syrup",  price:15},
+  {name:"Caramel Syrup",    price:15},{name:"Vanilla Syrup",   price:15},
+  {name:"Brown Sugar Syrup",price:15},{name:"Strawberry Syrup",price:15},
+  {name:"Mocha Drizzle",    price:15},{name:"Maple Syrup",     price:20},
+  {name:"Whipped Cream",    price:20},{name:"Cream Cheese",    price:25},
+];
+
+const SIZES = [
+  {name:"Small",  label:"8 oz",  price:0},
+  {name:"Medium", label:"12 oz", price:20},
+  {name:"Large",  label:"16 oz", price:35},
+];
+
+const SUGAR_LABELS = {0:"No Sugar",25:"Less Sweet",50:"Half Sweet",75:"More Sweet",100:"Full Sweet"};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let activeCat    = MENU[0].cat;
+let cart         = [];
+let cartIdCounter = 0;
+let modalItem    = null, modalCat = null;
+let modalQtyVal  = 1, modalSize = 0, modalSugar = 25;
+let modalAddons  = new Set();
+
+// ── KIOSK IDENTITY ────────────────────────────────────────────────────────────
+let kioskId = sessionStorage.getItem('kiosk_id');
+if(!kioskId){
+  const ids   = ['Kiosk 1','Kiosk 2','Kiosk 3','Kiosk 4'];
+  const taken = new Set(JSON.parse(localStorage.getItem('active_kiosks')||'[]'));
+  kioskId     = ids.find(id=>!taken.has(id)) || ('Kiosk '+(Date.now()%100));
+  taken.add(kioskId);
+  localStorage.setItem('active_kiosks', JSON.stringify([...taken]));
+  sessionStorage.setItem('kiosk_id', kioskId);
+}
+
+// ── BROADCAST CHANNEL — instant ping to dashboard ────────────────────────────
+const orderChannel = new BroadcastChannel('cafe_orders_channel');
+
+// ── TABS & MENU ───────────────────────────────────────────────────────────────
+function renderTabs(){
+  document.getElementById('tabsEl').innerHTML = MENU.map(c=>
+    '<button class="tab'+(c.cat===activeCat?' active':'')+'" onclick="setTab(\''+c.cat+'\')">'+c.cat+'</button>'
+  ).join('');
+}
+function setTab(cat){activeCat=cat;renderTabs();renderMenu();}
+
+function renderMenu(){
+  document.getElementById('sectionTitle').textContent = activeCat;
+  const sec = MENU.find(c=>c.cat===activeCat);
+  document.getElementById('menuEl').innerHTML = sec.items.map((item,i)=>{
+    const inCart = cart.filter(ci=>ci.catName===activeCat&&ci.item.name===item.name).reduce((s,ci)=>s+ci.qty,0);
+    return '<div class="item-card'+(inCart>0?' has-item':'')+'" onclick="openModal(\''+activeCat+'\','+i+')">'
+      +'<div class="item-emoji">'+item.emoji+'</div>'
+      +'<div class="item-info"><div class="item-name">'+item.name+'</div><div class="item-desc">'+item.desc+'</div></div>'
+      +'<div class="item-right"><div class="item-price">₱'+item.price+'</div>'
+      +(inCart>0
+        ?'<div style="background:var(--gold);color:#0f0a05;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700">'+inCart+' in cart</div>'
+        :'<button class="add-btn-inline" onclick="event.stopPropagation();openModal(\''+activeCat+'\','+i+')">+ Add</button>')
+      +'</div></div>';
+  }).join('');
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openModal(catName,idx){
+  const sec = MENU.find(c=>c.cat===catName);
+  modalItem=sec.items[idx]; modalCat=catName;
+  modalQtyVal=1; modalSize=0; modalSugar=25; modalAddons=new Set();
+  document.getElementById('modalEmoji').textContent=modalItem.emoji;
+  document.getElementById('modalName').textContent=modalItem.name;
+  document.getElementById('modalBasePrice').textContent='₱'+modalItem.price;
+  document.getElementById('modalNotes').value='';
+  document.getElementById('modalQty').textContent='1';
+  const isDrink=IS_DRINK_CAT(catName);
+  document.getElementById('sizeSection').style.display=isDrink?'':'none';
+  document.getElementById('sugarSection').style.display=isDrink?'':'none';
+  if(isDrink){
+    document.getElementById('sizeRow').innerHTML=SIZES.map((s,i)=>
+      '<div class="size-chip'+(i===0?' selected':'')+'" onclick="selectSize('+i+')" id="sizeChip'+i+'">'
+      +'<div class="size-chip-name">'+s.name+'</div>'
+      +'<div class="size-chip-price">'+(s.price>0?'+₱'+s.price:'Base')+'</div></div>'
+    ).join('');
+    const sl=document.getElementById('sugarSlider');
+    sl.value=25; sl.style.setProperty('--pct','25%');
+    document.getElementById('sugarPctDisplay').textContent='25%';
+    document.getElementById('sugarLabelText').textContent=SUGAR_LABELS[25];
+  }
+  const activeAddons=catName==='Pastries'?PASTRY_ADDONS:ADDONS;
+  document.getElementById('addonSectionTitle').innerHTML=catName==='Pastries'
+    ?'Syrups & Toppings <span style="color:var(--muted2);font-size:10px;text-transform:none;letter-spacing:0">(optional)</span>'
+    :'Add-ons <span style="color:var(--muted2);font-size:10px;text-transform:none;letter-spacing:0">(optional)</span>';
+  document.getElementById('addonGrid').innerHTML=activeAddons.map((a,i)=>
+    '<div class="addon-chip" id="addonChip'+i+'" onclick="toggleAddon('+i+')">'
+    +'<div><div class="addon-chip-name">'+a.name+'</div>'
+    +'<div class="addon-chip-price">'+(a.price>0?'+₱'+a.price:'Free')+'</div></div>'
+    +'<div class="addon-check" id="addonCheck'+i+'"></div></div>'
+  ).join('');
+  updateModalPrice();
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function selectSize(i){
+  modalSize=i;
+  document.querySelectorAll('.size-chip').forEach((c,ci)=>c.classList.toggle('selected',ci===i));
+  updateModalPrice();
+}
+function getActiveAddons(){return modalCat==='Pastries'?PASTRY_ADDONS:ADDONS;}
+function toggleAddon(i){
+  if(modalAddons.has(i))modalAddons.delete(i);else modalAddons.add(i);
+  document.getElementById('addonChip'+i).classList.toggle('selected',modalAddons.has(i));
+  document.getElementById('addonCheck'+i).textContent=modalAddons.has(i)?'✓':'';
+  updateModalPrice();
+}
+function updateSugar(val){
+  modalSugar=parseInt(val);
+  document.getElementById('sugarSlider').style.setProperty('--pct',((val/100)*100)+'%');
+  document.getElementById('sugarPctDisplay').textContent=val+'%';
+  document.getElementById('sugarLabelText').textContent=SUGAR_LABELS[parseInt(val)]||val+'%';
+  updateModalPrice();
+}
+function modalQtyChange(d){
+  modalQtyVal=Math.max(1,modalQtyVal+d);
+  document.getElementById('modalQty').textContent=modalQtyVal;
+  updateModalPrice();
+}
+function updateModalPrice(){
+  if(!modalItem)return;
+  const sizeExtra=IS_DRINK_CAT(modalCat)?SIZES[modalSize].price:0;
+  const addonExtra=[...modalAddons].reduce((s,i)=>s+getActiveAddons()[i].price,0);
+  const unit=modalItem.price+sizeExtra+addonExtra;
+  document.getElementById('modalAddPrice').textContent='₱'+(unit*modalQtyVal).toLocaleString('en-PH');
+}
+function addFromModal(){
+  const isDrink=IS_DRINK_CAT(modalCat);
+  const sizeExtra=isDrink?SIZES[modalSize].price:0;
+  const addonExtra=[...modalAddons].reduce((s,i)=>s+getActiveAddons()[i].price,0);
+  const unitPrice=modalItem.price+sizeExtra+addonExtra;
+  cart.push({
+    id:cartIdCounter++, item:{...modalItem}, catName:modalCat,
+    size:isDrink?SIZES[modalSize]:null, sugar:isDrink?modalSugar:null,
+    addons:[...modalAddons].map(i=>getActiveAddons()[i]),
+    notes:document.getElementById('modalNotes').value.trim(),
+    qty:modalQtyVal, unitPrice
+  });
+  document.getElementById('modalOverlay').classList.remove('show');
+  updateCart(); renderMenu();
+}
+function closeModalIf(e){if(e.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show');}
+
+// ── CART ──────────────────────────────────────────────────────────────────────
+function updateCart(){
+  const total=cart.reduce((s,ci)=>s+ci.unitPrice*ci.qty,0);
+  const count=cart.reduce((s,ci)=>s+ci.qty,0);
+  document.getElementById('cartCount').textContent=count;
+  document.getElementById('cartSubtotal').textContent='₱'+total.toLocaleString('en-PH',{minimumFractionDigits:2});
+  document.getElementById('cartTotal').textContent='₱'+total.toLocaleString('en-PH',{minimumFractionDigits:2});
+  document.getElementById('floatLabel').textContent=count+' item'+(count!==1?'s':'');
+  document.getElementById('floatPrice').textContent='₱'+total.toLocaleString('en-PH');
+  document.getElementById('floatCart').classList.toggle('visible',count>0);
+  document.getElementById('orderBtn').disabled=count===0;
+  renderCartItems();
+}
+function renderCartItems(){
+  const el=document.getElementById('cartItems');
+  if(!cart.length){el.innerHTML='<div class="empty-cart"><div>🛒</div>Nothing here yet.<br>Tap items from the menu to add them!</div>';return;}
+  el.innerHTML=cart.map(ci=>{
+    const mods=[];
+    if(ci.size)mods.push(ci.size.name+' ('+ci.size.label+')');
+    if(ci.sugar!==null)mods.push('Sugar '+ci.sugar+'%');
+    ci.addons.forEach(a=>mods.push(a.name));
+    if(ci.notes)mods.push('"'+ci.notes+'"');
+    return '<div class="cart-item"><div class="cart-item-row"><div>'
+      +'<div class="cart-item-name">'+ci.item.emoji+' '+ci.item.name+' x'+ci.qty+'</div>'
+      +(mods.length?'<div class="cart-item-mods">'+mods.join(' · ')+'</div>':'')
+      +'</div><div class="cart-item-right">'
+      +'<div class="cart-item-price">₱'+(ci.unitPrice*ci.qty).toLocaleString('en-PH')+'</div>'
+      +'<button class="remove-btn" onclick="removeCartItem('+ci.id+')">✕</button>'
+      +'</div></div></div>';
+  }).join('');
+}
+function removeCartItem(id){cart=cart.filter(ci=>ci.id!==id);updateCart();renderMenu();}
+function toggleCart(){
+  document.getElementById('cartPanel').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+// ── PLACE ORDER — POST to MySQL via server.js ─────────────────────────────────
+async function placeOrder(){
+  const btn=document.getElementById('orderBtn');
+  btn.disabled=true; btn.textContent='Placing order…';
+  try {
+    const res = await fetch(API+'/orders',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        kiosk_id: kioskId,
+        items: cart.map(ci=>({
+          name:       ci.item.name,
+          emoji:      ci.item.emoji,
+          size:       ci.size ? ci.size.name : null,
+          sugar:      ci.sugar !== undefined ? ci.sugar : null,
+          addons:     ci.addons.map(a=>a.name),
+          notes:      ci.notes || null,
+          qty:        ci.qty,
+          unit_price: ci.unitPrice,
+        }))
+      })
+    });
+    if(!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    orderChannel.postMessage({type:'new_order', orderNum: data.order_num, kioskId});
+    document.getElementById('orderNumEl').textContent = data.order_num;
+    document.getElementById('cartPanel').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+    document.getElementById('successScreen').classList.add('show');
+  } catch(err){
+    alert('Could not place order.\n\nMake sure server.js is running.\n\n'+err.message);
+    btn.disabled=false; btn.textContent='Place Order';
+  }
+}
+
+function newOrder(){
+  cart=[]; updateCart(); renderMenu();
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('orderBtn').textContent='Place Order';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+const sub = document.querySelector('.logo span');
+if(sub) sub.textContent = kioskId + ' · Self-Order';
+renderTabs();
+renderMenu();
+updateCart();
+</script>
+</body>
+</html>
